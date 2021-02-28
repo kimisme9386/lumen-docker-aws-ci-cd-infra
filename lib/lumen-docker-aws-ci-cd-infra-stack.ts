@@ -3,6 +3,7 @@ import * as codepipeline from '@aws-cdk/aws-codepipeline';
 import * as codepipeline_actions from '@aws-cdk/aws-codepipeline-actions';
 import { CodeBuildActionType } from '@aws-cdk/aws-codepipeline-actions';
 import * as cdk from '@aws-cdk/core';
+import { Aws, Tags } from '@aws-cdk/core';
 
 export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -13,8 +14,10 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
       pipelineName: 'LumenDockerDevPipeline',
       crossAccountKeys: false,
     });
+    this.tagResource(pipeline);
 
     const sourceOutput = new codepipeline.Artifact();
+
     pipeline.addStage({
       stageName: 'Source',
       actions: [
@@ -27,6 +30,7 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
             'arn:aws:codestar-connections:ap-northeast-1:482631629698:connection/6a6dd11d-2713-4129-9e5d-23289c8968d6',
           variablesNamespace: 'GitHubSourceVariables',
           branch: 'master',
+          codeBuildCloneOutput: true,
         }),
       ],
     });
@@ -44,6 +48,7 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
         },
       }
     );
+    this.tagResource(project);
 
     const afterBuildArtifact = new codepipeline.Artifact();
 
@@ -59,5 +64,11 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
         }),
       ],
     });
+  }
+
+  tagResource(scope: cdk.Construct): void {
+    // ref: https://github.com/aws/aws-cdk/issues/4134
+    Tags.of(scope).add('CDK-CfnStackId', Aws.STACK_ID);
+    Tags.of(scope).add('CDK-CfnStackName', Aws.STACK_NAME);
   }
 }
