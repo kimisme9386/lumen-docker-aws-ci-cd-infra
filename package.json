@@ -10,15 +10,18 @@
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "preinstall": "npx npm-force-resolutions"
   },
   "devDependencies": {
     "@aws-cdk/assert": "^1.89.0",
+    "@types/aws-lambda": "^8.10.72",
     "@types/jest": "^26.0.10",
     "@types/node": "10.17.27",
     "@typescript-eslint/eslint-plugin": "^3.6.0",
     "@typescript-eslint/parser": "^3.6.0",
     "aws-cdk": "^1.89.0",
+    "aws-lambda": "^1.0.6",
     "eslint": "^7.4.0",
     "eslint-plugin-jest": "^23.18.0",
     "jest": "^26.4.2",
@@ -30,9 +33,15 @@
     "@aws-cdk/aws-codepipeline": "^1.89.0",
     "@aws-cdk/aws-codepipeline-actions": "^1.89.0",
     "@aws-cdk/aws-ecr": "^1.89.0",
+    "@aws-cdk/aws-events-targets": "^1.89.0",
+    "@aws-cdk/aws-lambda": "^1.89.0",
     "@aws-cdk/aws-ssm": "^1.89.0",
     "@aws-cdk/core": "^1.89.0",
     "@aws-cdk/pipelines": "^1.89.0",
     "source-map-support": "^0.5.16"
+  },
+  "resolutions": {
+    "archiver": "5.2.0",
+    "crc32-stream": "4.0.2"
   }
 }
