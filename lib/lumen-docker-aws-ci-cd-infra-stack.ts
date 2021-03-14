@@ -135,7 +135,7 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
           command: [
             'bash',
             '-c',
-            'npm install && npm run build && cp -r /asset-input/dist/ /asset-output/',
+            'npm install && npm run build && cp -r /asset-input/dist/ /asset-output/ && cp -a /asset-input/node_modules /asset-output/',
           ],
         },
       }),
