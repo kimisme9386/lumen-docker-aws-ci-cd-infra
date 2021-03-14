@@ -4,6 +4,7 @@ import * as codepipeline_actions from '@aws-cdk/aws-codepipeline-actions';
 import { CodeBuildActionType } from '@aws-cdk/aws-codepipeline-actions';
 import * as targets from '@aws-cdk/aws-events-targets';
 import * as lambda from '@aws-cdk/aws-lambda';
+import * as s3 from '@aws-cdk/aws-s3';
 import * as ssm from '@aws-cdk/aws-ssm';
 import * as cdk from '@aws-cdk/core';
 import { Aws, Tags } from '@aws-cdk/core';
@@ -12,6 +13,8 @@ import * as path from 'path';
 export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
+
+    const branchName = 'master';
 
     // The code that defines your stack goes here
     const pipeline = new codepipeline.Pipeline(this, 'DevPipeline', {
@@ -33,7 +36,7 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
           connectionArn:
             'arn:aws:codestar-connections:ap-northeast-1:482631629698:connection/6a6dd11d-2713-4129-9e5d-23289c8968d6',
           variablesNamespace: 'GitHubSourceVariables',
-          branch: 'master',
+          branch: branchName,
           codeBuildCloneOutput: true,
         }),
       ],
@@ -73,9 +76,22 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
       this,
       '/codepipeline/notification/slack-webhook-path'
     );
+
+    const badgeBucket = new s3.Bucket(this, 'BadgeBucket', {
+      publicReadAccess: true,
+    });
+
+    const badgeBucketImageKeyName = `${branchName}-latest-build.svg`;
     const targetLambda = this.createEventLambdaFunction(
-      `https://hooks.slack.com/services${slackWebhookPath}`
+      `https://hooks.slack.com/services${slackWebhookPath}`,
+      badgeBucket.bucketName,
+      badgeBucketImageKeyName
     );
+
+    badgeBucket.grantReadWrite(targetLambda);
+    new cdk.CfnOutput(this, 'badgeMarkdownLink', {
+      value: `[![Build Status](https://${badgeBucket.bucketName}.ap-northeast-1.amazon.com/${badgeBucketImageKeyName})](https://ap-northeast-1.console.aws.amazon.com/codesuite/codepipeline/pipelines/${pipeline.pipelineName}/view)`,
+    });
 
     pipeline.onStateChange('CodePipelineStateChange', {
       eventPattern: {
@@ -106,13 +122,29 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
     Tags.of(scope).add('CDK-CfnStackName', Aws.STACK_NAME);
   }
 
-  createEventLambdaFunction(slackWebhookURL: string): lambda.Function {
+  createEventLambdaFunction(
+    slackWebhookURL: string,
+    badgeBucketName: string,
+    badgeBucketImageKeyName: string
+  ): lambda.Function {
     const lambdaFunc = new lambda.Function(this, 'CodepipelineEventLambda', {
+      code: lambda.Code.fromAsset(path.join(__dirname, '../lambda'), {
+        bundling: {
+          user: 'root',
+          image: lambda.Runtime.NODEJS_14_X.bundlingDockerImage,
+          command: [
+            'bash',
+            '-c',
+            'npm install && npm run build && cp -r /asset-input/dist/ /asset-output/',
+          ],
+        },
+      }),
       runtime: lambda.Runtime.NODEJS_14_X,
-      code: lambda.Code.fromAsset(path.join(__dirname, '../lambda')),
       handler: 'codepipelineEventLambda.handler',
       environment: {
         SLACK_WEBHOOK_URL: slackWebhookURL,
+        BADGE_BUCKET_NAME: badgeBucketName,
+        BADGE_BUCKET_IMAGE_KEY_NAME: badgeBucketImageKeyName,
       },
     });
 
