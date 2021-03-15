@@ -44,6 +44,7 @@ export const handler = async (
         Bucket: badgeBucket,
         Key: badgeBucketImageKeyName,
         Body: Buffer.from(imageResp.data),
+        ContentType: 'image/svg+xml',
       })
     );
   }
