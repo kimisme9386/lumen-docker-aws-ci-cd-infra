@@ -98,7 +98,7 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
         source: ['aws.codepipeline'],
         detailType: ['CodePipeline Pipeline Execution State Change'],
         detail: {
-          state: ['STARTED', 'CANCELED', 'FAILED'],
+          state: ['STARTED', 'CANCELED', 'FAILED', 'SUCCEEDED'],
         },
       },
       target: new targets.LambdaFunction(targetLambda),
@@ -107,9 +107,12 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
     pipeline.onStateChange('CodePipelineActionStateChange', {
       eventPattern: {
         source: ['aws.codepipeline'],
-        detailType: ['CodePipeline Action Execution State Change'],
+        detailType: [
+          'CodePipeline Stage Execution State Change',
+          'CodePipeline Action Execution State Change',
+        ],
         detail: {
-          state: ['STARTED', 'CANCELED', 'FAILED'],
+          state: ['CANCELED', 'FAILED'],
         },
       },
       target: new targets.LambdaFunction(targetLambda),
@@ -135,12 +138,18 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
           command: [
             'bash',
             '-c',
-            'npm install && npm run build && cp -r /asset-input/dist/ /asset-output/ && cp -a /asset-input/node_modules /asset-output/',
+            [
+              'npm install',
+              'npm run build',
+              'cp -r /asset-input/dist /asset-output/',
+              'npm install --only=production',
+              'cp -a /asset-input/node_modules /asset-output/',
+            ].join(' && '),
           ],
         },
       }),
       runtime: lambda.Runtime.NODEJS_14_X,
-      handler: 'codepipelineEventLambda.handler',
+      handler: 'dist/codepipelineEventLambda.handler',
       environment: {
         SLACK_WEBHOOK_URL: slackWebhookURL,
         BADGE_BUCKET_NAME: badgeBucketName,
