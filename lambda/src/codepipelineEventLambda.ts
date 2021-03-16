@@ -1,6 +1,33 @@
+import {
+  CodePipelineClient,
+  GetPipelineExecutionCommand,
+} from '@aws-sdk/client-codepipeline';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { Callback, CodePipelineCloudWatchEvent, Context } from 'aws-lambda';
+import {
+  Callback,
+  CodePipelineCloudWatchEvent,
+  CodePipelineCloudWatchStageEvent,
+  Context,
+} from 'aws-lambda';
 import { default as axios, default as Axios } from 'axios';
+
+enum CodePipelineState {
+  STARTED = 'STARTED',
+  CANCELED = 'CANCELED',
+  FAILED = 'FAILED',
+  SUCCEEDED = 'SUCCEEDED',
+}
+
+interface SourceActionData {
+  owner: string;
+  repository: string;
+  sha: string;
+}
+
+const CodePipelineFailState = [
+  CodePipelineState.CANCELED as string,
+  CodePipelineState.FAILED as string,
+];
 
 export const handler = async (
   event: CodePipelineCloudWatchEvent,
@@ -20,17 +47,30 @@ export const handler = async (
     'https://img.shields.io/badge/AWS%20CodePipeline-passing-green.svg';
   const failSvgUrl =
     'https://img.shields.io/badge/AWS%20CodePipeline-fail-red.svg';
+  const executionId = event.detail['execution-id'];
+  const codePipelineName = process.env.CODE_PIPELINE_NAME as string;
+  let stage: string | null = null;
 
-  const respData = await Axios.create({
-    headers: { 'Context-Type': 'application/json' },
-  }).post(webhookUrl, { text: `${process.env.STAGE}: ${subject}` });
-  console.log(`STATUS: ${respData.data.statusCode}`);
+  if ((event as CodePipelineCloudWatchStageEvent).detail.stage) {
+    stage = (<CodePipelineCloudWatchStageEvent>event).detail.stage;
+  }
+
+  let sendToSack = true;
+  if (state == CodePipelineState.SUCCEEDED && stage && stage != 'Build') {
+    sendToSack = false;
+  }
+
+  if (sendToSack === true) {
+    const respData = await Axios.create({
+      headers: { 'Context-Type': 'application/json' },
+    }).post(webhookUrl, { text: `${process.env.STAGE}: ${subject}` });
+    console.log(`webhookUrl response:\n ${respData}`);
+  }
 
   let imageUrl: string | null = null;
-
-  if (state == 'SUCCEEDED') {
+  if (state == CodePipelineState.SUCCEEDED && stage == 'Build') {
     imageUrl = passingSvgUrl;
-  } else if (state == 'FAILED') {
+  } else if (CodePipelineFailState.includes(state)) {
     imageUrl = failSvgUrl;
   }
 
@@ -48,4 +88,70 @@ export const handler = async (
       })
     );
   }
+
+  const sourceActionData = await getPipelineSourceActionData(
+    executionId,
+    codePipelineName
+  );
+
+  let sourceActionState: string | null = null;
+
+  switch (state) {
+    case CodePipelineState.SUCCEEDED:
+      sourceActionState = 'success';
+      break;
+
+    case CodePipelineState.CANCELED:
+    case CodePipelineState.FAILED:
+      sourceActionState = 'error';
+      break;
+  }
+
+  if (sourceActionData && sourceActionState) {
+    console.log(
+      `sourceActionCommitStatusUrl:\n https://api.github.com/repos/${sourceActionData?.owner}/${sourceActionData?.repository}/statuses/${sourceActionData?.sha}`
+    );
+    const respSourceActionData = await Axios.create({
+      headers: { 'Context-Type': 'application/json' },
+    }).post(
+      `https://api.github.com/repos/${sourceActionData?.owner}/${sourceActionData?.repository}/statuses/${sourceActionData?.sha}`,
+      {
+        state: sourceActionState,
+      }
+    );
+    console.log(`respSourceActionData:\n ${respSourceActionData}`);
+  }
+};
+
+const getPipelineSourceActionData = async (
+  executionId: string,
+  pipelineName: string
+): Promise<SourceActionData | null> => {
+  const client = new CodePipelineClient({
+    region: 'ap-northeast-1',
+  });
+  const result = await client.send(
+    new GetPipelineExecutionCommand({
+      pipelineExecutionId: executionId,
+      pipelineName: pipelineName,
+    })
+  );
+  console.log(`pipeline data:\n ${JSON.stringify(result)}`);
+  const artifactRevision = result.pipelineExecution?.artifactRevisions
+    ? result.pipelineExecution?.artifactRevisions[0]
+    : null;
+
+  if (artifactRevision) {
+    const revisionURL = artifactRevision.revisionUrl;
+    const sha = artifactRevision.revisionId;
+    const pattern = /github.com\/(.+)\/(.+)\/commit\//;
+    const matches = revisionURL ? pattern.exec(revisionURL) : [];
+    return {
+      owner: matches ? matches[1] : '',
+      repository: matches ? matches[2] : '',
+      sha: sha ? sha : '',
+    };
+  }
+
+  return null;
 };

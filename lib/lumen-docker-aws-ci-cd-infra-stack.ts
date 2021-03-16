@@ -3,12 +3,20 @@ import * as codepipeline from '@aws-cdk/aws-codepipeline';
 import * as codepipeline_actions from '@aws-cdk/aws-codepipeline-actions';
 import { CodeBuildActionType } from '@aws-cdk/aws-codepipeline-actions';
 import * as targets from '@aws-cdk/aws-events-targets';
+import * as iam from '@aws-cdk/aws-iam';
 import * as lambda from '@aws-cdk/aws-lambda';
 import * as s3 from '@aws-cdk/aws-s3';
 import * as ssm from '@aws-cdk/aws-ssm';
 import * as cdk from '@aws-cdk/core';
 import { Aws, Tags } from '@aws-cdk/core';
 import * as path from 'path';
+
+enum CodePipelineState {
+  STARTED = 'STARTED',
+  CANCELED = 'CANCELED',
+  FAILED = 'FAILED',
+  SUCCEEDED = 'SUCCEEDED',
+}
 
 export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -85,7 +93,8 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
     const targetLambda = this.createEventLambdaFunction(
       `https://hooks.slack.com/services${slackWebhookPath}`,
       badgeBucket.bucketName,
-      badgeBucketImageKeyName
+      badgeBucketImageKeyName,
+      pipeline.pipelineName
     );
 
     badgeBucket.grantReadWrite(targetLambda);
@@ -93,12 +102,22 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
       value: `[![Build Status](https://${badgeBucket.bucketName}.ap-northeast-1.amazon.com/${badgeBucketImageKeyName})](https://ap-northeast-1.console.aws.amazon.com/codesuite/codepipeline/pipelines/${pipeline.pipelineName}/view)`,
     });
 
+    targetLambda.role?.addManagedPolicy(
+      iam.ManagedPolicy.fromAwsManagedPolicyName(
+        'AWSCodePipeline_ReadOnlyAccess'
+      )
+    );
+
     pipeline.onStateChange('CodePipelineStateChange', {
       eventPattern: {
         source: ['aws.codepipeline'],
         detailType: ['CodePipeline Pipeline Execution State Change'],
         detail: {
-          state: ['STARTED', 'CANCELED', 'FAILED', 'SUCCEEDED'],
+          state: [
+            CodePipelineState.STARTED,
+            CodePipelineState.CANCELED,
+            CodePipelineState.FAILED,
+          ],
         },
       },
       target: new targets.LambdaFunction(targetLambda),
@@ -107,12 +126,24 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
     pipeline.onStateChange('CodePipelineActionStateChange', {
       eventPattern: {
         source: ['aws.codepipeline'],
-        detailType: [
-          'CodePipeline Stage Execution State Change',
-          'CodePipeline Action Execution State Change',
-        ],
+        detailType: ['CodePipeline Stage Execution State Change'],
         detail: {
-          state: ['CANCELED', 'FAILED'],
+          state: [
+            CodePipelineState.SUCCEEDED,
+            CodePipelineState.CANCELED,
+            CodePipelineState.FAILED,
+          ],
+        },
+      },
+      target: new targets.LambdaFunction(targetLambda),
+    });
+
+    pipeline.onStateChange('CodePipelineActionStateChange', {
+      eventPattern: {
+        source: ['aws.codepipeline'],
+        detailType: ['CodePipeline Action Execution State Change'],
+        detail: {
+          state: [CodePipelineState.CANCELED, CodePipelineState.FAILED],
         },
       },
       target: new targets.LambdaFunction(targetLambda),
@@ -128,7 +159,8 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
   createEventLambdaFunction(
     slackWebhookURL: string,
     badgeBucketName: string,
-    badgeBucketImageKeyName: string
+    badgeBucketImageKeyName: string,
+    codePipelineName: string
   ): lambda.Function {
     const lambdaFunc = new lambda.Function(this, 'CodepipelineEventLambda', {
       code: lambda.Code.fromAsset(path.join(__dirname, '../lambda'), {
@@ -154,6 +186,7 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
         SLACK_WEBHOOK_URL: slackWebhookURL,
         BADGE_BUCKET_NAME: badgeBucketName,
         BADGE_BUCKET_IMAGE_KEY_NAME: badgeBucketImageKeyName,
+        CODE_PIPELINE_NAME: codePipelineName,
       },
     });
 
