@@ -3,12 +3,7 @@ import {
   GetPipelineExecutionCommand,
 } from '@aws-sdk/client-codepipeline';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import {
-  Callback,
-  CodePipelineCloudWatchEvent,
-  CodePipelineCloudWatchStageEvent,
-  Context,
-} from 'aws-lambda';
+import { Callback, CodePipelineCloudWatchEvent, Context } from 'aws-lambda';
 import { default as axios } from 'axios';
 import url from 'url';
 
@@ -30,6 +25,7 @@ interface SourceActionData {
 const CodePipelineFailState = [
   CodePipelineState.CANCELED as string,
   CodePipelineState.FAILED as string,
+  CodePipelineState.SUCCEEDED as string,
 ];
 
 export const handler = async (
@@ -53,28 +49,16 @@ export const handler = async (
   const executionId = event.detail['execution-id'];
   const codePipelineName = process.env.CODE_PIPELINE_NAME as string;
   const githubPersonalToken = process.env.GITHUB_PERSONAL_TOKEN as string;
-  let stage: string | null = null;
 
-  if ((event as CodePipelineCloudWatchStageEvent).detail.stage) {
-    stage = (<CodePipelineCloudWatchStageEvent>event).detail.stage;
-  }
-
-  let sendToSack = true;
-  if (state == CodePipelineState.SUCCEEDED && stage && stage != 'Build') {
-    sendToSack = false;
-  }
-
-  if (sendToSack === true) {
-    const respData = await axios
-      .create({
-        headers: { 'Context-Type': 'application/json' },
-      })
-      .post(webhookUrl, { text: `${process.env.STAGE}: ${subject}` });
-    console.log(`webhookUrl response:\n ${respData}`);
-  }
+  const respData = await axios
+    .create({
+      headers: { 'Context-Type': 'application/json' },
+    })
+    .post(webhookUrl, { text: `${process.env.STAGE}: ${subject}` });
+  console.log(`webhookUrl response:\n ${respData}`);
 
   let imageUrl: string | null = null;
-  if (state == CodePipelineState.SUCCEEDED && stage == 'Build') {
+  if (state == CodePipelineState.SUCCEEDED) {
     imageUrl = passingSvgUrl;
   } else if (CodePipelineFailState.includes(state)) {
     imageUrl = failSvgUrl;
