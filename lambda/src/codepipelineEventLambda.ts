@@ -9,13 +9,16 @@ import {
   CodePipelineCloudWatchStageEvent,
   Context,
 } from 'aws-lambda';
-import { default as axios, default as Axios } from 'axios';
+import { default as axios } from 'axios';
+import url from 'url';
 
 enum CodePipelineState {
   STARTED = 'STARTED',
+  RESUMED = 'RESUMED',
   CANCELED = 'CANCELED',
   FAILED = 'FAILED',
   SUCCEEDED = 'SUCCEEDED',
+  SUPERSEDED = 'SUPERSEDED',
 }
 
 interface SourceActionData {
@@ -49,6 +52,7 @@ export const handler = async (
     'https://img.shields.io/badge/AWS%20CodePipeline-fail-red.svg';
   const executionId = event.detail['execution-id'];
   const codePipelineName = process.env.CODE_PIPELINE_NAME as string;
+  const githubPersonalToken = process.env.GITHUB_PERSONAL_TOKEN as string;
   let stage: string | null = null;
 
   if ((event as CodePipelineCloudWatchStageEvent).detail.stage) {
@@ -61,9 +65,11 @@ export const handler = async (
   }
 
   if (sendToSack === true) {
-    const respData = await Axios.create({
-      headers: { 'Context-Type': 'application/json' },
-    }).post(webhookUrl, { text: `${process.env.STAGE}: ${subject}` });
+    const respData = await axios
+      .create({
+        headers: { 'Context-Type': 'application/json' },
+      })
+      .post(webhookUrl, { text: `${process.env.STAGE}: ${subject}` });
     console.log(`webhookUrl response:\n ${respData}`);
   }
 
@@ -97,6 +103,12 @@ export const handler = async (
   let sourceActionState: string | null = null;
 
   switch (state) {
+    case CodePipelineState.STARTED:
+    case CodePipelineState.RESUMED:
+    case CodePipelineState.SUPERSEDED:
+      sourceActionState = 'pending';
+      break;
+
     case CodePipelineState.SUCCEEDED:
       sourceActionState = 'success';
       break;
@@ -111,14 +123,22 @@ export const handler = async (
     console.log(
       `sourceActionCommitStatusUrl:\n https://api.github.com/repos/${sourceActionData?.owner}/${sourceActionData?.repository}/statuses/${sourceActionData?.sha}`
     );
-    const respSourceActionData = await Axios.create({
-      headers: { 'Context-Type': 'application/json' },
-    }).post(
-      `https://api.github.com/repos/${sourceActionData?.owner}/${sourceActionData?.repository}/statuses/${sourceActionData?.sha}`,
-      {
-        state: sourceActionState,
-      }
-    );
+    const respSourceActionData = await axios
+      .create({
+        headers: {
+          'Context-Type': 'application/json',
+          Authorization: `token ${githubPersonalToken}`,
+        },
+      })
+      .post(
+        `https://api.github.com/repos/${sourceActionData?.owner}/${sourceActionData?.repository}/statuses/${sourceActionData?.sha}`,
+        {
+          state: sourceActionState,
+          target_url: `https://ap-northeast-1.console.aws.amazon.com/codesuite/codepipeline/pipelines/${codePipelineName}/view`,
+          context: 'continuous-integration/codepipeline',
+          description: `Build ${sourceActionState}`,
+        }
+      );
     console.log(`respSourceActionData:\n ${respSourceActionData}`);
   }
 };
@@ -144,11 +164,13 @@ const getPipelineSourceActionData = async (
   if (artifactRevision) {
     const revisionURL = artifactRevision.revisionUrl;
     const sha = artifactRevision.revisionId;
-    const pattern = /github.com\/(.+)\/(.+)\/commit\//;
-    const matches = revisionURL ? pattern.exec(revisionURL) : [];
+    const fullRepositoryId = new url.URL(
+      revisionURL as string
+    ).searchParams.get('FullRepositoryId') as string;
+
     return {
-      owner: matches ? matches[1] : '',
-      repository: matches ? matches[2] : '',
+      owner: fullRepositoryId ? fullRepositoryId.split('/')[0] : '',
+      repository: fullRepositoryId ? fullRepositoryId.split('/')[1] : '',
       sha: sha ? sha : '',
     };
   }
