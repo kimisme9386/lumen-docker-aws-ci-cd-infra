@@ -64,10 +64,12 @@ export const handler = async (
     imageUrl = failSvgUrl;
   }
 
+  console.log(`debug badge update image: ${imageUrl}`);
   if (imageUrl) {
     const imageResp = await axios.get(imageUrl, {
       responseType: 'arraybuffer',
     });
+
     const s3 = new S3Client({ region: 'ap-northeast-1' });
     await s3.send(
       new PutObjectCommand({
@@ -75,6 +77,8 @@ export const handler = async (
         Key: badgeBucketImageKeyName,
         Body: Buffer.from(imageResp.data),
         ContentType: 'image/svg+xml',
+        CacheControl: 'cache-control: no-cache',
+        Expires: new Date(Date.now()),
       })
     );
   }
@@ -103,6 +107,8 @@ export const handler = async (
       break;
   }
 
+  console.log(`debug state: ${state}`);
+  console.log(`debug sourceActionData: ${JSON.stringify(sourceActionData)}`);
   if (sourceActionData && sourceActionState) {
     console.log(
       `sourceActionCommitStatusUrl:\n https://api.github.com/repos/${sourceActionData?.owner}/${sourceActionData?.repository}/statuses/${sourceActionData?.sha}`
@@ -123,7 +129,7 @@ export const handler = async (
           description: `Build ${sourceActionState}`,
         }
       );
-    console.log(`respSourceActionData:\n ${respSourceActionData}`);
+    console.log(respSourceActionData);
   }
 };
 
