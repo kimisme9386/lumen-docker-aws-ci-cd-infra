@@ -98,7 +98,7 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
 
     badgeBucket.grantReadWrite(targetLambda);
     new cdk.CfnOutput(this, 'badgeMarkdownLink', {
-      value: `[![Build Status](https://${badgeBucket.bucketName}.ap-northeast-1.amazon.com/${badgeBucketImageKeyName})](https://ap-northeast-1.console.aws.amazon.com/codesuite/codepipeline/pipelines/${pipeline.pipelineName}/view)`,
+      value: `[![Build Status](https://${badgeBucket.bucketName}.s3-ap-northeast-1.amazonaws.com/${badgeBucketImageKeyName}#1)](https://ap-northeast-1.console.aws.amazon.com/codesuite/codepipeline/pipelines/${pipeline.pipelineName}/view)`,
     });
 
     targetLambda.role?.addManagedPolicy(
