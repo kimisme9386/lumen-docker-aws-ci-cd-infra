@@ -132,7 +132,7 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
           webhookFilters: [
             codebuild.FilterGroup.inEventOf(
               codebuild.EventAction.PUSH
-            ).andHeadRefIsNot(`refs/heads/${branchName}`),
+            ).andCommitMessageIs('\\[CodeBuild\\]'),
             codebuild.FilterGroup.inEventOf(
               codebuild.EventAction.PULL_REQUEST_MERGED
             ).andBaseRefIsNot(`refs/heads/${branchName}`),
