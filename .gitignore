@@ -7,4 +7,5 @@ node_modules
 .cdk.staging
 cdk.out
 
-lambda/dist
+lambda/codepipeline-event/dist
+lambda/codebuild-event/dist

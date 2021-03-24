@@ -88,7 +88,8 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
     });
 
     const badgeBucketImageKeyName = `${branchName}-latest-build.svg`;
-    const targetLambda = this.createEventLambdaFunction(
+    const targetLambda = this.createCodePipelineEventLambdaFunction(
+      branchName,
       `https://hooks.slack.com/services${slackWebhookPath}`,
       badgeBucket.bucketName,
       badgeBucketImageKeyName,
@@ -114,6 +115,50 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
       },
       target: new targets.LambdaFunction(targetLambda),
     });
+
+    // CodeBuild exclude deploy of codepipeline
+    const codeBuildProjectExcludeDeploy = new codebuild.Project(
+      this,
+      'LumenDockerDevCodeBuildExcludeDeploy',
+      {
+        buildSpec: codebuild.BuildSpec.fromSourceFilename(
+          'codebuild/buildspec-vm.yml'
+        ),
+        source: codebuild.Source.gitHub({
+          owner: 'kimisme9386',
+          repo: 'lumen-docker-quick-start',
+          webhook: true, // optional, default: true if `webhookFilters` were provided, false otherwise
+          webhookTriggersBatchBuild: false, // optional, default is false
+          webhookFilters: [
+            codebuild.FilterGroup.inEventOf(
+              codebuild.EventAction.PUSH
+            ).andHeadRefIsNot(`refs/heads/${branchName}`),
+            codebuild.FilterGroup.inEventOf(
+              codebuild.EventAction.PULL_REQUEST_MERGED
+            ).andBaseRefIsNot(`refs/heads/${branchName}`),
+            codebuild.FilterGroup.inEventOf(
+              codebuild.EventAction.PULL_REQUEST_CREATED,
+              codebuild.EventAction.PULL_REQUEST_UPDATED
+            ),
+          ],
+          reportBuildStatus: true,
+        }),
+        badge: true,
+        environment: {
+          buildImage: codebuild.LinuxBuildImage.STANDARD_4_0,
+          computeType: codebuild.ComputeType.SMALL,
+        },
+      }
+    );
+
+    const targetCodeBuildLambda = this.createCodeBuildEventLambdaFunction(
+      branchName,
+      `https://hooks.slack.com/services${slackWebhookPath}`
+    );
+
+    codeBuildProjectExcludeDeploy.onStateChange('CodeBuildChange', {
+      target: new targets.LambdaFunction(targetCodeBuildLambda),
+    });
   }
 
   tagResource(scope: cdk.Construct): void {
@@ -122,7 +167,8 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
     Tags.of(scope).add('CDK-CfnStackName', Aws.STACK_NAME);
   }
 
-  createEventLambdaFunction(
+  createCodePipelineEventLambdaFunction(
+    stage: string,
     slackWebhookURL: string,
     badgeBucketName: string,
     badgeBucketImageKeyName: string,
@@ -130,31 +176,73 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
     githubPersonalToken: string
   ): lambda.Function {
     const lambdaFunc = new lambda.Function(this, 'CodepipelineEventLambda', {
-      code: lambda.Code.fromAsset(path.join(__dirname, '../lambda'), {
-        bundling: {
-          user: 'root',
-          image: lambda.Runtime.NODEJS_14_X.bundlingDockerImage,
-          command: [
-            'bash',
-            '-c',
-            [
-              'npm install',
-              'npm run build',
-              'cp -r /asset-input/dist /asset-output/',
-              'npm install --only=production',
-              'cp -a /asset-input/node_modules /asset-output/',
-            ].join(' && '),
-          ],
-        },
-      }),
+      code: lambda.Code.fromAsset(
+        path.join(__dirname, '../lambda/codepipeline-event'),
+        {
+          bundling: {
+            user: 'root',
+            image: lambda.Runtime.NODEJS_14_X.bundlingDockerImage,
+            command: [
+              'bash',
+              '-c',
+              [
+                'npm install',
+                'npm run build',
+                'cp -r /asset-input/dist /asset-output/',
+                'npm install --only=production',
+                'cp -a /asset-input/node_modules /asset-output/',
+              ].join(' && '),
+            ],
+          },
+        }
+      ),
       runtime: lambda.Runtime.NODEJS_14_X,
       handler: 'dist/codepipelineEventLambda.handler',
       environment: {
+        STAGE: stage,
         SLACK_WEBHOOK_URL: slackWebhookURL,
         BADGE_BUCKET_NAME: badgeBucketName,
         BADGE_BUCKET_IMAGE_KEY_NAME: badgeBucketImageKeyName,
         CODE_PIPELINE_NAME: codePipelineName,
         GITHUB_PERSONAL_TOKEN: githubPersonalToken,
+      },
+    });
+
+    this.tagResource(lambdaFunc);
+
+    return lambdaFunc;
+  }
+
+  createCodeBuildEventLambdaFunction(
+    stage: string,
+    slackWebhookURL: string
+  ): lambda.Function {
+    const lambdaFunc = new lambda.Function(this, 'CodeBuildEventLambda', {
+      code: lambda.Code.fromAsset(
+        path.join(__dirname, '../lambda/codebuild-event'),
+        {
+          bundling: {
+            user: 'root',
+            image: lambda.Runtime.NODEJS_14_X.bundlingDockerImage,
+            command: [
+              'bash',
+              '-c',
+              [
+                'npm install',
+                'npm run build',
+                'cp -r /asset-input/dist /asset-output/',
+                'npm install --only=production',
+                'cp -a /asset-input/node_modules /asset-output/',
+              ].join(' && '),
+            ],
+          },
+        }
+      ),
+      runtime: lambda.Runtime.NODEJS_14_X,
+      handler: 'dist/codeBuildEventLambda.handler',
+      environment: {
+        STAGE: stage,
+        SLACK_WEBHOOK_URL: slackWebhookURL,
       },
     });
 
