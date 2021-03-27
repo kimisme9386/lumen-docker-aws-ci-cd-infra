@@ -54,6 +54,7 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
           buildImage: codebuild.LinuxBuildImage.STANDARD_4_0,
           computeType: codebuild.ComputeType.SMALL,
         },
+        cache: codebuild.Cache.local(codebuild.LocalCacheMode.CUSTOM),
       }
     );
     this.tagResource(project);
@@ -148,6 +149,7 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
           buildImage: codebuild.LinuxBuildImage.STANDARD_4_0,
           computeType: codebuild.ComputeType.SMALL,
         },
+        cache: codebuild.Cache.local(codebuild.LocalCacheMode.CUSTOM),
       }
     );
 
