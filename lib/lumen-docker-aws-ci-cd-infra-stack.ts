@@ -191,7 +191,7 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
         {
           bundling: {
             user: 'root',
-            image: lambda.Runtime.NODEJS_14_X.bundlingDockerImage,
+            image: lambda.Runtime.NODEJS_14_X.bundlingImage,
             command: [
               'bash',
               '-c',
@@ -245,7 +245,7 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
         {
           bundling: {
             user: 'root',
-            image: lambda.Runtime.NODEJS_14_X.bundlingDockerImage,
+            image: lambda.Runtime.NODEJS_14_X.bundlingImage,
             command: [
               'bash',
               '-c',
