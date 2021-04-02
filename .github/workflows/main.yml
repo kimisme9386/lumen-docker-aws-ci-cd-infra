@@ -9,6 +9,7 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v2
+      - run: npm i
       - run: make lint && make build
 
       - name: cdk diff
