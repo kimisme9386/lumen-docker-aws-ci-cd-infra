@@ -1,0 +1,1348 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Empty Stack 1`] = `
+Object {
+  "Outputs": Object {
+    "CodePipelineStatusbadgeMarkdownLink09FB99F3": Object {
+      "Value": Object {
+        "Fn::Join": Array [
+          "",
+          Array [
+            "[![Build Status](https://",
+            Object {
+              "Ref": "CodePipelineStatusBadgeBucketEC4C6A0A",
+            },
+            ".s3-ap-northeast-1.amazonaws.com/dev-latest-build.svg#1)](https://",
+            Object {
+              "Ref": "AWS::Region",
+            },
+            ".console.aws.amazon.com/codesuite/codepipeline/pipelines/",
+            Object {
+              "Ref": "DevPipeline90F20C86",
+            },
+            "/view)",
+          ],
+        ],
+      },
+    },
+  },
+  "Parameters": Object {
+    "AssetParametersb2026be190bb8aba6841156135a44666311d9fbdd65b0c0aa96e78b42ff7f843ArtifactHash6C78AD53": Object {
+      "Description": "Artifact hash for asset \\"b2026be190bb8aba6841156135a44666311d9fbdd65b0c0aa96e78b42ff7f843\\"",
+      "Type": "String",
+    },
+    "AssetParametersb2026be190bb8aba6841156135a44666311d9fbdd65b0c0aa96e78b42ff7f843S3Bucket97D1B282": Object {
+      "Description": "S3 bucket for asset \\"b2026be190bb8aba6841156135a44666311d9fbdd65b0c0aa96e78b42ff7f843\\"",
+      "Type": "String",
+    },
+    "AssetParametersb2026be190bb8aba6841156135a44666311d9fbdd65b0c0aa96e78b42ff7f843S3VersionKeyEE05B401": Object {
+      "Description": "S3 key for asset version \\"b2026be190bb8aba6841156135a44666311d9fbdd65b0c0aa96e78b42ff7f843\\"",
+      "Type": "String",
+    },
+  },
+  "Resources": Object {
+    "CodeBuildEventLambdaEFC8D286": Object {
+      "DependsOn": Array [
+        "CodeBuildEventLambdaServiceRole02DAA614",
+      ],
+      "Properties": Object {
+        "Code": Object {
+          "S3Bucket": Object {
+            "Ref": "AssetParametersb2026be190bb8aba6841156135a44666311d9fbdd65b0c0aa96e78b42ff7f843S3Bucket97D1B282",
+          },
+          "S3Key": Object {
+            "Fn::Join": Array [
+              "",
+              Array [
+                Object {
+                  "Fn::Select": Array [
+                    0,
+                    Object {
+                      "Fn::Split": Array [
+                        "||",
+                        Object {
+                          "Ref": "AssetParametersb2026be190bb8aba6841156135a44666311d9fbdd65b0c0aa96e78b42ff7f843S3VersionKeyEE05B401",
+                        },
+                      ],
+                    },
+                  ],
+                },
+                Object {
+                  "Fn::Select": Array [
+                    1,
+                    Object {
+                      "Fn::Split": Array [
+                        "||",
+                        Object {
+                          "Ref": "AssetParametersb2026be190bb8aba6841156135a44666311d9fbdd65b0c0aa96e78b42ff7f843S3VersionKeyEE05B401",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            ],
+          },
+        },
+        "Environment": Object {
+          "Variables": Object {
+            "SLACK_WEBHOOK_URL": "https://hooks.slack.com/services{{resolve:ssm:/codepipeline/notification/slack-webhook-path}}",
+            "STAGE": "master",
+          },
+        },
+        "Handler": "dist/codeBuildEventLambda.handler",
+        "Role": Object {
+          "Fn::GetAtt": Array [
+            "CodeBuildEventLambdaServiceRole02DAA614",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs14.x",
+        "Tags": Array [
+          Object {
+            "Key": "CDK-CfnStackId",
+            "Value": Object {
+              "Ref": "AWS::StackId",
+            },
+          },
+          Object {
+            "Key": "CDK-CfnStackName",
+            "Value": Object {
+              "Ref": "AWS::StackName",
+            },
+          },
+        ],
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CodeBuildEventLambdaServiceRole02DAA614": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": Array [
+          Object {
+            "Fn::Join": Array [
+              "",
+              Array [
+                "arn:",
+                Object {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+        "Tags": Array [
+          Object {
+            "Key": "CDK-CfnStackId",
+            "Value": Object {
+              "Ref": "AWS::StackId",
+            },
+          },
+          Object {
+            "Key": "CDK-CfnStackName",
+            "Value": Object {
+              "Ref": "AWS::StackName",
+            },
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CodePipelineStatusBadgeBucketEC4C6A0A": Object {
+      "DeletionPolicy": "Retain",
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "CodePipelineStatusBadgeBucketPolicy5CAFDBCD": Object {
+      "Properties": Object {
+        "Bucket": Object {
+          "Ref": "CodePipelineStatusBadgeBucketEC4C6A0A",
+        },
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "s3:GetObject",
+              "Effect": "Allow",
+              "Principal": "*",
+              "Resource": Object {
+                "Fn::Join": Array [
+                  "",
+                  Array [
+                    Object {
+                      "Fn::GetAtt": Array [
+                        "CodePipelineStatusBadgeBucketEC4C6A0A",
+                        "Arn",
+                      ],
+                    },
+                    "/*",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "CodePipelineStatusCodePipelineCodePipelineChangeAllowEventRuleMyTestStackCodePipelineStatusCodepipelineEventLambdaD98A92587DBCD4E1": Object {
+      "Properties": Object {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": Object {
+          "Fn::GetAtt": Array [
+            "CodePipelineStatusCodepipelineEventLambda81D12435",
+            "Arn",
+          ],
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": Object {
+          "Fn::GetAtt": Array [
+            "CodePipelineStatusCodePipelineCodePipelineChangeE4090DB6",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "CodePipelineStatusCodePipelineCodePipelineChangeE4090DB6": Object {
+      "Properties": Object {
+        "EventPattern": Object {
+          "detail-type": Array [
+            "CodePipeline Pipeline Execution State Change",
+          ],
+          "resources": Array [
+            Object {
+              "Fn::Join": Array [
+                "",
+                Array [
+                  "arn:",
+                  Object {
+                    "Ref": "AWS::Partition",
+                  },
+                  ":codepipeline:",
+                  Object {
+                    "Ref": "AWS::Region",
+                  },
+                  ":",
+                  Object {
+                    "Ref": "AWS::AccountId",
+                  },
+                  ":",
+                  Object {
+                    "Ref": "DevPipeline90F20C86",
+                  },
+                ],
+              ],
+            },
+          ],
+          "source": Array [
+            "aws.codepipeline",
+          ],
+        },
+        "State": "ENABLED",
+        "Targets": Array [
+          Object {
+            "Arn": Object {
+              "Fn::GetAtt": Array [
+                "CodePipelineStatusCodepipelineEventLambda81D12435",
+                "Arn",
+              ],
+            },
+            "Id": "Target0",
+          },
+        ],
+      },
+      "Type": "AWS::Events::Rule",
+    },
+    "CodePipelineStatusCodepipelineEventLambda81D12435": Object {
+      "DependsOn": Array [
+        "CodePipelineStatusCodepipelineEventLambdaServiceRoleDefaultPolicy6AE1D470",
+        "CodePipelineStatusCodepipelineEventLambdaServiceRole6CB7440B",
+      ],
+      "Properties": Object {
+        "Code": Object {
+          "ImageUri": Object {
+            "Fn::Join": Array [
+              "",
+              Array [
+                Object {
+                  "Ref": "AWS::AccountId",
+                },
+                ".dkr.ecr.",
+                Object {
+                  "Ref": "AWS::Region",
+                },
+                ".",
+                Object {
+                  "Ref": "AWS::URLSuffix",
+                },
+                "/aws-cdk/assets:aa33962fa8222620339b42ee930c7bdd2d9e550054f26b145592d5d2b2f5f404",
+              ],
+            ],
+          },
+        },
+        "Environment": Object {
+          "Variables": Object {
+            "BADGE_BUCKET_IMAGE_KEY_NAME": "dev-latest-build.svg",
+            "BADGE_BUCKET_NAME": Object {
+              "Ref": "CodePipelineStatusBadgeBucketEC4C6A0A",
+            },
+            "CODE_PIPELINE_NAME": Object {
+              "Ref": "DevPipeline90F20C86",
+            },
+            "GITHUB_PERSONAL_TOKEN": "{{resolve:secretsmanager:arn:aws:secretsmanager:ap-northeast-1:482631629698:secret:codepipeline/lambda/github-token-YWWmII:SecretString:codepipeline/lambda/github-token::}}",
+            "SLACK_WEBHOOK_URL": "https://hooks.slack.com/services{{resolve:ssm:/codepipeline/notification/slack-webhook-path}}",
+            "STAGE": "dev",
+          },
+        },
+        "ImageConfig": Object {
+          "Command": Array [
+            "codepipelineEventLambda.handler",
+          ],
+        },
+        "PackageType": "Image",
+        "Role": Object {
+          "Fn::GetAtt": Array [
+            "CodePipelineStatusCodepipelineEventLambdaServiceRole6CB7440B",
+            "Arn",
+          ],
+        },
+        "Tags": Array [
+          Object {
+            "Key": "CDK-CfnStackId",
+            "Value": Object {
+              "Ref": "AWS::StackId",
+            },
+          },
+          Object {
+            "Key": "CDK-CfnStackName",
+            "Value": Object {
+              "Ref": "AWS::StackName",
+            },
+          },
+        ],
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CodePipelineStatusCodepipelineEventLambdaServiceRole6CB7440B": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": Array [
+          Object {
+            "Fn::Join": Array [
+              "",
+              Array [
+                "arn:",
+                Object {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+          Object {
+            "Fn::Join": Array [
+              "",
+              Array [
+                "arn:",
+                Object {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AWSCodePipeline_ReadOnlyAccess",
+              ],
+            ],
+          },
+        ],
+        "Tags": Array [
+          Object {
+            "Key": "CDK-CfnStackId",
+            "Value": Object {
+              "Ref": "AWS::StackId",
+            },
+          },
+          Object {
+            "Key": "CDK-CfnStackName",
+            "Value": Object {
+              "Ref": "AWS::StackName",
+            },
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CodePipelineStatusCodepipelineEventLambdaServiceRoleDefaultPolicy6AE1D470": Object {
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": Array [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+                "s3:PutObject*",
+                "s3:Abort*",
+              ],
+              "Effect": "Allow",
+              "Resource": Array [
+                Object {
+                  "Fn::GetAtt": Array [
+                    "CodePipelineStatusBadgeBucketEC4C6A0A",
+                    "Arn",
+                  ],
+                },
+                Object {
+                  "Fn::Join": Array [
+                    "",
+                    Array [
+                      Object {
+                        "Fn::GetAtt": Array [
+                          "CodePipelineStatusBadgeBucketEC4C6A0A",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "CodePipelineStatusCodepipelineEventLambdaServiceRoleDefaultPolicy6AE1D470",
+        "Roles": Array [
+          Object {
+            "Ref": "CodePipelineStatusCodepipelineEventLambdaServiceRole6CB7440B",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "DevPipeline90F20C86": Object {
+      "DependsOn": Array [
+        "DevPipelineRoleDefaultPolicyCD8772B2",
+        "DevPipelineRoleE5AF1AA2",
+      ],
+      "Properties": Object {
+        "ArtifactStore": Object {
+          "Location": Object {
+            "Ref": "DevPipelineArtifactsBucketEA21B1AE",
+          },
+          "Type": "S3",
+        },
+        "Name": "LumenDockerDevPipeline",
+        "RoleArn": Object {
+          "Fn::GetAtt": Array [
+            "DevPipelineRoleE5AF1AA2",
+            "Arn",
+          ],
+        },
+        "Stages": Array [
+          Object {
+            "Actions": Array [
+              Object {
+                "ActionTypeId": Object {
+                  "Category": "Source",
+                  "Owner": "AWS",
+                  "Provider": "CodeStarSourceConnection",
+                  "Version": "1",
+                },
+                "Configuration": Object {
+                  "BranchName": "master",
+                  "ConnectionArn": "arn:aws:codestar-connections:ap-northeast-1:482631629698:connection/6a6dd11d-2713-4129-9e5d-23289c8968d6",
+                  "FullRepositoryId": "kimisme9386/lumen-docker-quick-start",
+                  "OutputArtifactFormat": "CODEBUILD_CLONE_REF",
+                },
+                "Name": "GitHub_Source",
+                "Namespace": "GitHubSourceVariables",
+                "OutputArtifacts": Array [
+                  Object {
+                    "Name": "Artifact_Source_GitHub_Source",
+                  },
+                ],
+                "RoleArn": Object {
+                  "Fn::GetAtt": Array [
+                    "DevPipelineSourceGitHubSourceCodePipelineActionRoleE563E8EE",
+                    "Arn",
+                  ],
+                },
+                "RunOrder": 1,
+              },
+            ],
+            "Name": "Source",
+          },
+          Object {
+            "Actions": Array [
+              Object {
+                "ActionTypeId": Object {
+                  "Category": "Build",
+                  "Owner": "AWS",
+                  "Provider": "CodeBuild",
+                  "Version": "1",
+                },
+                "Configuration": Object {
+                  "ProjectName": Object {
+                    "Ref": "LumenDockerDevCodeBuild6381B9AE",
+                  },
+                },
+                "InputArtifacts": Array [
+                  Object {
+                    "Name": "Artifact_Source_GitHub_Source",
+                  },
+                ],
+                "Name": "AWS_CodeBuild",
+                "OutputArtifacts": Array [
+                  Object {
+                    "Name": "Artifact_Build_AWS_CodeBuild",
+                  },
+                ],
+                "RoleArn": Object {
+                  "Fn::GetAtt": Array [
+                    "DevPipelineBuildAWSCodeBuildCodePipelineActionRole9033A16B",
+                    "Arn",
+                  ],
+                },
+                "RunOrder": 1,
+              },
+            ],
+            "Name": "Build",
+          },
+        ],
+        "Tags": Array [
+          Object {
+            "Key": "CDK-CfnStackId",
+            "Value": Object {
+              "Ref": "AWS::StackId",
+            },
+          },
+          Object {
+            "Key": "CDK-CfnStackName",
+            "Value": Object {
+              "Ref": "AWS::StackName",
+            },
+          },
+        ],
+      },
+      "Type": "AWS::CodePipeline::Pipeline",
+    },
+    "DevPipelineArtifactsBucketEA21B1AE": Object {
+      "DeletionPolicy": "Retain",
+      "Properties": Object {
+        "BucketEncryption": Object {
+          "ServerSideEncryptionConfiguration": Array [
+            Object {
+              "ServerSideEncryptionByDefault": Object {
+                "SSEAlgorithm": "aws:kms",
+              },
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": Object {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": Array [
+          Object {
+            "Key": "CDK-CfnStackId",
+            "Value": Object {
+              "Ref": "AWS::StackId",
+            },
+          },
+          Object {
+            "Key": "CDK-CfnStackName",
+            "Value": Object {
+              "Ref": "AWS::StackName",
+            },
+          },
+        ],
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "DevPipelineBuildAWSCodeBuildCodePipelineActionRole9033A16B": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "AWS": Object {
+                  "Fn::Join": Array [
+                    "",
+                    Array [
+                      "arn:",
+                      Object {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":iam::",
+                      Object {
+                        "Ref": "AWS::AccountId",
+                      },
+                      ":root",
+                    ],
+                  ],
+                },
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Tags": Array [
+          Object {
+            "Key": "CDK-CfnStackId",
+            "Value": Object {
+              "Ref": "AWS::StackId",
+            },
+          },
+          Object {
+            "Key": "CDK-CfnStackName",
+            "Value": Object {
+              "Ref": "AWS::StackName",
+            },
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "DevPipelineBuildAWSCodeBuildCodePipelineActionRoleDefaultPolicy95BDB77C": Object {
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": Array [
+                "codebuild:BatchGetBuilds",
+                "codebuild:StartBuild",
+                "codebuild:StopBuild",
+              ],
+              "Effect": "Allow",
+              "Resource": Object {
+                "Fn::GetAtt": Array [
+                  "LumenDockerDevCodeBuild6381B9AE",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "DevPipelineBuildAWSCodeBuildCodePipelineActionRoleDefaultPolicy95BDB77C",
+        "Roles": Array [
+          Object {
+            "Ref": "DevPipelineBuildAWSCodeBuildCodePipelineActionRole9033A16B",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "DevPipelineRoleDefaultPolicyCD8772B2": Object {
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": Array [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+                "s3:PutObject*",
+                "s3:Abort*",
+              ],
+              "Effect": "Allow",
+              "Resource": Array [
+                Object {
+                  "Fn::GetAtt": Array [
+                    "DevPipelineArtifactsBucketEA21B1AE",
+                    "Arn",
+                  ],
+                },
+                Object {
+                  "Fn::Join": Array [
+                    "",
+                    Array [
+                      Object {
+                        "Fn::GetAtt": Array [
+                          "DevPipelineArtifactsBucketEA21B1AE",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Resource": Object {
+                "Fn::GetAtt": Array [
+                  "DevPipelineSourceGitHubSourceCodePipelineActionRoleE563E8EE",
+                  "Arn",
+                ],
+              },
+            },
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Resource": Object {
+                "Fn::GetAtt": Array [
+                  "DevPipelineBuildAWSCodeBuildCodePipelineActionRole9033A16B",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "DevPipelineRoleDefaultPolicyCD8772B2",
+        "Roles": Array [
+          Object {
+            "Ref": "DevPipelineRoleE5AF1AA2",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "DevPipelineRoleE5AF1AA2": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "Service": "codepipeline.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Tags": Array [
+          Object {
+            "Key": "CDK-CfnStackId",
+            "Value": Object {
+              "Ref": "AWS::StackId",
+            },
+          },
+          Object {
+            "Key": "CDK-CfnStackName",
+            "Value": Object {
+              "Ref": "AWS::StackName",
+            },
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "DevPipelineSourceGitHubSourceCodePipelineActionRoleDefaultPolicyFFCD5007": Object {
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "codestar-connections:UseConnection",
+              "Effect": "Allow",
+              "Resource": "arn:aws:codestar-connections:ap-northeast-1:482631629698:connection/6a6dd11d-2713-4129-9e5d-23289c8968d6",
+            },
+            Object {
+              "Action": Array [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+                "s3:PutObject*",
+                "s3:Abort*",
+              ],
+              "Effect": "Allow",
+              "Resource": Array [
+                Object {
+                  "Fn::GetAtt": Array [
+                    "DevPipelineArtifactsBucketEA21B1AE",
+                    "Arn",
+                  ],
+                },
+                Object {
+                  "Fn::Join": Array [
+                    "",
+                    Array [
+                      Object {
+                        "Fn::GetAtt": Array [
+                          "DevPipelineArtifactsBucketEA21B1AE",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            Object {
+              "Action": "s3:PutObjectAcl",
+              "Effect": "Allow",
+              "Resource": Object {
+                "Fn::Join": Array [
+                  "",
+                  Array [
+                    Object {
+                      "Fn::GetAtt": Array [
+                        "DevPipelineArtifactsBucketEA21B1AE",
+                        "Arn",
+                      ],
+                    },
+                    "/*",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "DevPipelineSourceGitHubSourceCodePipelineActionRoleDefaultPolicyFFCD5007",
+        "Roles": Array [
+          Object {
+            "Ref": "DevPipelineSourceGitHubSourceCodePipelineActionRoleE563E8EE",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "DevPipelineSourceGitHubSourceCodePipelineActionRoleE563E8EE": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "AWS": Object {
+                  "Fn::Join": Array [
+                    "",
+                    Array [
+                      "arn:",
+                      Object {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":iam::",
+                      Object {
+                        "Ref": "AWS::AccountId",
+                      },
+                      ":root",
+                    ],
+                  ],
+                },
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Tags": Array [
+          Object {
+            "Key": "CDK-CfnStackId",
+            "Value": Object {
+              "Ref": "AWS::StackId",
+            },
+          },
+          Object {
+            "Key": "CDK-CfnStackName",
+            "Value": Object {
+              "Ref": "AWS::StackName",
+            },
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "LumenDockerDevCodeBuild6381B9AE": Object {
+      "Properties": Object {
+        "Artifacts": Object {
+          "Type": "CODEPIPELINE",
+        },
+        "Cache": Object {
+          "Modes": Array [
+            "LOCAL_CUSTOM_CACHE",
+          ],
+          "Type": "LOCAL",
+        },
+        "EncryptionKey": "alias/aws/s3",
+        "Environment": Object {
+          "ComputeType": "BUILD_GENERAL1_SMALL",
+          "Image": "aws/codebuild/standard:4.0",
+          "ImagePullCredentialsType": "CODEBUILD",
+          "PrivilegedMode": false,
+          "Type": "LINUX_CONTAINER",
+        },
+        "ServiceRole": Object {
+          "Fn::GetAtt": Array [
+            "LumenDockerDevCodeBuildRole89427B3A",
+            "Arn",
+          ],
+        },
+        "Source": Object {
+          "BuildSpec": "codebuild/buildspec-vm.yml",
+          "Type": "CODEPIPELINE",
+        },
+        "Tags": Array [
+          Object {
+            "Key": "CDK-CfnStackId",
+            "Value": Object {
+              "Ref": "AWS::StackId",
+            },
+          },
+          Object {
+            "Key": "CDK-CfnStackName",
+            "Value": Object {
+              "Ref": "AWS::StackName",
+            },
+          },
+        ],
+      },
+      "Type": "AWS::CodeBuild::Project",
+    },
+    "LumenDockerDevCodeBuildExcludeDeployAB9E395D": Object {
+      "Properties": Object {
+        "Artifacts": Object {
+          "Type": "NO_ARTIFACTS",
+        },
+        "BadgeEnabled": true,
+        "Cache": Object {
+          "Modes": Array [
+            "LOCAL_CUSTOM_CACHE",
+          ],
+          "Type": "LOCAL",
+        },
+        "EncryptionKey": "alias/aws/s3",
+        "Environment": Object {
+          "ComputeType": "BUILD_GENERAL1_SMALL",
+          "Image": "aws/codebuild/standard:4.0",
+          "ImagePullCredentialsType": "CODEBUILD",
+          "PrivilegedMode": false,
+          "Type": "LINUX_CONTAINER",
+        },
+        "ServiceRole": Object {
+          "Fn::GetAtt": Array [
+            "LumenDockerDevCodeBuildExcludeDeployRoleE000D2A7",
+            "Arn",
+          ],
+        },
+        "Source": Object {
+          "BuildSpec": "codebuild/buildspec-vm.yml",
+          "Location": "https://github.com/kimisme9386/lumen-docker-quick-start.git",
+          "ReportBuildStatus": true,
+          "Type": "GITHUB",
+        },
+        "Triggers": Object {
+          "FilterGroups": Array [
+            Array [
+              Object {
+                "Pattern": "PUSH",
+                "Type": "EVENT",
+              },
+              Object {
+                "Pattern": "\\\\[CodeBuild\\\\]",
+                "Type": "COMMIT_MESSAGE",
+              },
+            ],
+            Array [
+              Object {
+                "Pattern": "PULL_REQUEST_MERGED",
+                "Type": "EVENT",
+              },
+              Object {
+                "ExcludeMatchedPattern": true,
+                "Pattern": "refs/heads/master",
+                "Type": "BASE_REF",
+              },
+            ],
+            Array [
+              Object {
+                "Pattern": "PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED",
+                "Type": "EVENT",
+              },
+            ],
+          ],
+          "Webhook": true,
+        },
+      },
+      "Type": "AWS::CodeBuild::Project",
+    },
+    "LumenDockerDevCodeBuildExcludeDeployCodeBuildChangeAF4CB423": Object {
+      "Properties": Object {
+        "EventPattern": Object {
+          "detail": Object {
+            "project-name": Array [
+              Object {
+                "Ref": "LumenDockerDevCodeBuildExcludeDeployAB9E395D",
+              },
+            ],
+          },
+          "detail-type": Array [
+            "CodeBuild Build State Change",
+          ],
+          "source": Array [
+            "aws.codebuild",
+          ],
+        },
+        "State": "ENABLED",
+        "Targets": Array [
+          Object {
+            "Arn": Object {
+              "Fn::GetAtt": Array [
+                "CodeBuildEventLambdaEFC8D286",
+                "Arn",
+              ],
+            },
+            "Id": "Target0",
+          },
+        ],
+      },
+      "Type": "AWS::Events::Rule",
+    },
+    "LumenDockerDevCodeBuildExcludeDeployCodeBuildChangeAllowEventRuleMyTestStackCodeBuildEventLambda05849EC427E1E8D9": Object {
+      "Properties": Object {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": Object {
+          "Fn::GetAtt": Array [
+            "CodeBuildEventLambdaEFC8D286",
+            "Arn",
+          ],
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": Object {
+          "Fn::GetAtt": Array [
+            "LumenDockerDevCodeBuildExcludeDeployCodeBuildChangeAF4CB423",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "LumenDockerDevCodeBuildExcludeDeployRoleDefaultPolicy56DE0EE1": Object {
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": Array [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": Array [
+                Object {
+                  "Fn::Join": Array [
+                    "",
+                    Array [
+                      "arn:",
+                      Object {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":logs:",
+                      Object {
+                        "Ref": "AWS::Region",
+                      },
+                      ":",
+                      Object {
+                        "Ref": "AWS::AccountId",
+                      },
+                      ":log-group:/aws/codebuild/",
+                      Object {
+                        "Ref": "LumenDockerDevCodeBuildExcludeDeployAB9E395D",
+                      },
+                    ],
+                  ],
+                },
+                Object {
+                  "Fn::Join": Array [
+                    "",
+                    Array [
+                      "arn:",
+                      Object {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":logs:",
+                      Object {
+                        "Ref": "AWS::Region",
+                      },
+                      ":",
+                      Object {
+                        "Ref": "AWS::AccountId",
+                      },
+                      ":log-group:/aws/codebuild/",
+                      Object {
+                        "Ref": "LumenDockerDevCodeBuildExcludeDeployAB9E395D",
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            Object {
+              "Action": Array [
+                "codebuild:CreateReportGroup",
+                "codebuild:CreateReport",
+                "codebuild:UpdateReport",
+                "codebuild:BatchPutTestCases",
+                "codebuild:BatchPutCodeCoverages",
+              ],
+              "Effect": "Allow",
+              "Resource": Object {
+                "Fn::Join": Array [
+                  "",
+                  Array [
+                    "arn:",
+                    Object {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":codebuild:",
+                    Object {
+                      "Ref": "AWS::Region",
+                    },
+                    ":",
+                    Object {
+                      "Ref": "AWS::AccountId",
+                    },
+                    ":report-group/",
+                    Object {
+                      "Ref": "LumenDockerDevCodeBuildExcludeDeployAB9E395D",
+                    },
+                    "-*",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "LumenDockerDevCodeBuildExcludeDeployRoleDefaultPolicy56DE0EE1",
+        "Roles": Array [
+          Object {
+            "Ref": "LumenDockerDevCodeBuildExcludeDeployRoleE000D2A7",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "LumenDockerDevCodeBuildExcludeDeployRoleE000D2A7": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "Service": "codebuild.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "LumenDockerDevCodeBuildRole89427B3A": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "Service": "codebuild.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Tags": Array [
+          Object {
+            "Key": "CDK-CfnStackId",
+            "Value": Object {
+              "Ref": "AWS::StackId",
+            },
+          },
+          Object {
+            "Key": "CDK-CfnStackName",
+            "Value": Object {
+              "Ref": "AWS::StackName",
+            },
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "LumenDockerDevCodeBuildRoleDefaultPolicy6F3D16F7": Object {
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": Array [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": Array [
+                Object {
+                  "Fn::Join": Array [
+                    "",
+                    Array [
+                      "arn:",
+                      Object {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":logs:",
+                      Object {
+                        "Ref": "AWS::Region",
+                      },
+                      ":",
+                      Object {
+                        "Ref": "AWS::AccountId",
+                      },
+                      ":log-group:/aws/codebuild/",
+                      Object {
+                        "Ref": "LumenDockerDevCodeBuild6381B9AE",
+                      },
+                    ],
+                  ],
+                },
+                Object {
+                  "Fn::Join": Array [
+                    "",
+                    Array [
+                      "arn:",
+                      Object {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":logs:",
+                      Object {
+                        "Ref": "AWS::Region",
+                      },
+                      ":",
+                      Object {
+                        "Ref": "AWS::AccountId",
+                      },
+                      ":log-group:/aws/codebuild/",
+                      Object {
+                        "Ref": "LumenDockerDevCodeBuild6381B9AE",
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            Object {
+              "Action": Array [
+                "codebuild:CreateReportGroup",
+                "codebuild:CreateReport",
+                "codebuild:UpdateReport",
+                "codebuild:BatchPutTestCases",
+                "codebuild:BatchPutCodeCoverages",
+              ],
+              "Effect": "Allow",
+              "Resource": Object {
+                "Fn::Join": Array [
+                  "",
+                  Array [
+                    "arn:",
+                    Object {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":codebuild:",
+                    Object {
+                      "Ref": "AWS::Region",
+                    },
+                    ":",
+                    Object {
+                      "Ref": "AWS::AccountId",
+                    },
+                    ":report-group/",
+                    Object {
+                      "Ref": "LumenDockerDevCodeBuild6381B9AE",
+                    },
+                    "-*",
+                  ],
+                ],
+              },
+            },
+            Object {
+              "Action": Array [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+                "s3:PutObject*",
+                "s3:Abort*",
+              ],
+              "Effect": "Allow",
+              "Resource": Array [
+                Object {
+                  "Fn::GetAtt": Array [
+                    "DevPipelineArtifactsBucketEA21B1AE",
+                    "Arn",
+                  ],
+                },
+                Object {
+                  "Fn::Join": Array [
+                    "",
+                    Array [
+                      Object {
+                        "Fn::GetAtt": Array [
+                          "DevPipelineArtifactsBucketEA21B1AE",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            Object {
+              "Action": "codestar-connections:UseConnection",
+              "Effect": "Allow",
+              "Resource": "arn:aws:codestar-connections:ap-northeast-1:482631629698:connection/6a6dd11d-2713-4129-9e5d-23289c8968d6",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "LumenDockerDevCodeBuildRoleDefaultPolicy6F3D16F7",
+        "Roles": Array [
+          Object {
+            "Ref": "LumenDockerDevCodeBuildRole89427B3A",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+  },
+}
+`;

@@ -1,14 +1,12 @@
+import * as path from 'path';
 import * as codebuild from '@aws-cdk/aws-codebuild';
 import * as codepipeline from '@aws-cdk/aws-codepipeline';
 import * as codepipeline_actions from '@aws-cdk/aws-codepipeline-actions';
-import { CodeBuildActionType } from '@aws-cdk/aws-codepipeline-actions';
 import * as targets from '@aws-cdk/aws-events-targets';
 import * as lambda from '@aws-cdk/aws-lambda';
 import * as ssm from '@aws-cdk/aws-ssm';
 import * as cdk from '@aws-cdk/core';
-import { Aws, Tags } from '@aws-cdk/core';
 import { CodePipelineStatus } from 'cdk-pipeline-status';
-import * as path from 'path';
 
 export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -24,7 +22,7 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
     const buildIfIncludesCommitMessage = '\\[CodeBuild\\]';
 
     // Notification
-    const slackWebhookPath = ssm.StringParameter.valueFromLookup(
+    const slackWebhookPath = ssm.StringParameter.valueForStringParameter(
       this,
       '/codepipeline/notification/slack-webhook-path'
     );
@@ -62,7 +60,7 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
           actionName: 'AWS_CodeBuild',
           input: sourceOutput,
           project: project,
-          type: CodeBuildActionType.BUILD,
+          type: codepipeline_actions.CodeBuildActionType.BUILD,
           outputs: [afterBuildArtifact],
         }),
       ],
@@ -138,9 +136,9 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
         environment: buildEnvironment
           ? buildEnvironment
           : {
-              buildImage: codebuild.LinuxBuildImage.STANDARD_4_0,
-              computeType: codebuild.ComputeType.SMALL,
-            },
+            buildImage: codebuild.LinuxBuildImage.STANDARD_4_0,
+            computeType: codebuild.ComputeType.SMALL,
+          },
         cache: buildCache
           ? buildCache
           : codebuild.Cache.local(codebuild.LocalCacheMode.CUSTOM),
@@ -161,8 +159,8 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
 
   private tagResource(scope: cdk.Construct): void {
     // ref: https://github.com/aws/aws-cdk/issues/4134
-    Tags.of(scope).add('CDK-CfnStackId', Aws.STACK_ID);
-    Tags.of(scope).add('CDK-CfnStackName', Aws.STACK_NAME);
+    cdk.Tags.of(scope).add('CDK-CfnStackId', cdk.Aws.STACK_ID);
+    cdk.Tags.of(scope).add('CDK-CfnStackName', cdk.Aws.STACK_NAME);
   }
 
   private createCodeBuildEventLambdaFunction(
