@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Empty Stack 1`] = `
+exports[`snapshot validation 1`] = `
 Object {
   "Outputs": Object {
     "CodePipelineStatusbadgeMarkdownLink09FB99F3": Object {

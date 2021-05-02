@@ -1,5 +1,4 @@
 import { App } from '@aws-cdk/core';
-import 'source-map-support/register';
 import { LumenDockerAwsCiCdInfraStack } from './lumen-docker-aws-ci-cd-infra-stack';
 
 // for development, use account/region from cdk cli
