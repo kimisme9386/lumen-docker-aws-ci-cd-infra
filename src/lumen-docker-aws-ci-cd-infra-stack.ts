@@ -3,12 +3,11 @@ import * as codepipeline from '@aws-cdk/aws-codepipeline';
 import * as codepipeline_actions from '@aws-cdk/aws-codepipeline-actions';
 import { CodeBuildActionType } from '@aws-cdk/aws-codepipeline-actions';
 import * as targets from '@aws-cdk/aws-events-targets';
-import * as iam from '@aws-cdk/aws-iam';
 import * as lambda from '@aws-cdk/aws-lambda';
-import * as s3 from '@aws-cdk/aws-s3';
 import * as ssm from '@aws-cdk/aws-ssm';
 import * as cdk from '@aws-cdk/core';
 import { Aws, Tags } from '@aws-cdk/core';
+import { CodePipelineStatus } from 'cdk-pipeline-status';
 import * as path from 'path';
 
 export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
@@ -28,11 +27,6 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
     const slackWebhookPath = ssm.StringParameter.valueFromLookup(
       this,
       '/codepipeline/notification/slack-webhook-path'
-    );
-
-    const githubPersonalTokenForCommitStatus = ssm.StringParameter.valueFromLookup(
-      this,
-      '/codepipeline/github-personal-token'
     );
 
     const pipeline = this.createCodePipeline('LumenDockerDevPipeline');
@@ -74,19 +68,17 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
       ],
     });
 
-    const targetLambda = this.createCodePipelineEventLambdaFunction(
-      branchName,
-      `https://hooks.slack.com/services${slackWebhookPath}`,
-      pipeline.pipelineName,
-      githubPersonalTokenForCommitStatus
-    );
-
-    pipeline.onStateChange('CodePipelineChange', {
-      eventPattern: {
-        source: ['aws.codepipeline'],
-        detailType: ['CodePipeline Pipeline Execution State Change'],
+    new CodePipelineStatus(this, 'CodePipelineStatus', {
+      pipelineArn: pipeline.pipelineArn,
+      gitHubTokenFromSecretsManager: {
+        secretsManagerArn:
+          'arn:aws:secretsmanager:ap-northeast-1:482631629698:secret:codepipeline/lambda/github-token-YWWmII',
+        secretKey: 'codepipeline/lambda/github-token',
       },
-      target: new targets.LambdaFunction(targetLambda),
+      notification: {
+        stageName: 'dev',
+        slackWebHookUrl: `https://hooks.slack.com/services${slackWebhookPath}`,
+      },
     });
 
     // CodeBuild exclude deploy of codepipeline
@@ -171,68 +163,6 @@ export class LumenDockerAwsCiCdInfraStack extends cdk.Stack {
     // ref: https://github.com/aws/aws-cdk/issues/4134
     Tags.of(scope).add('CDK-CfnStackId', Aws.STACK_ID);
     Tags.of(scope).add('CDK-CfnStackName', Aws.STACK_NAME);
-  }
-
-  private createCodePipelineEventLambdaFunction(
-    stage: string,
-    slackWebhookURL: string,
-    codePipelineName: string,
-    githubPersonalToken: string
-  ): lambda.Function {
-    const badgeBucket = new s3.Bucket(this, 'BadgeBucket', {
-      publicReadAccess: true,
-    });
-
-    const badgeBucketImageKeyName = `${stage}-latest-build.svg`;
-
-    const lambdaFunc = new lambda.Function(this, 'CodepipelineEventLambda', {
-      code: lambda.Code.fromAsset(
-        path.join(__dirname, '../lambda/codepipeline-event'),
-        {
-          bundling: {
-            user: 'root',
-            image: lambda.Runtime.NODEJS_14_X.bundlingImage,
-            command: [
-              'bash',
-              '-c',
-              [
-                'npm install',
-                'npm run build',
-                'cp -r /asset-input/dist /asset-output/',
-                'npm install --only=production',
-                'cp -a /asset-input/node_modules /asset-output/',
-              ].join(' && '),
-            ],
-          },
-        }
-      ),
-      runtime: lambda.Runtime.NODEJS_14_X,
-      handler: 'dist/codepipelineEventLambda.handler',
-      environment: {
-        STAGE: stage,
-        SLACK_WEBHOOK_URL: slackWebhookURL,
-        BADGE_BUCKET_NAME: badgeBucket.bucketName,
-        BADGE_BUCKET_IMAGE_KEY_NAME: badgeBucketImageKeyName,
-        CODE_PIPELINE_NAME: codePipelineName,
-        GITHUB_PERSONAL_TOKEN: githubPersonalToken,
-      },
-    });
-
-    badgeBucket.grantReadWrite(lambdaFunc);
-
-    new cdk.CfnOutput(this, 'badgeMarkdownLink', {
-      value: `[![Build Status](https://${badgeBucket.bucketName}.s3-ap-northeast-1.amazonaws.com/${badgeBucketImageKeyName}#1)](https://ap-northeast-1.console.aws.amazon.com/codesuite/codepipeline/pipelines/${codePipelineName}/view)`,
-    });
-
-    lambdaFunc.role?.addManagedPolicy(
-      iam.ManagedPolicy.fromAwsManagedPolicyName(
-        'AWSCodePipeline_ReadOnlyAccess'
-      )
-    );
-
-    this.tagResource(lambdaFunc);
-
-    return lambdaFunc;
   }
 
   private createCodeBuildEventLambdaFunction(
