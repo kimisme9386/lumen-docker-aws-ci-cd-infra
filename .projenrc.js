@@ -60,7 +60,7 @@ deployWorkflow.on({
 deployWorkflow.addJobs({
   aws_cdk: {
     'runs-on': 'ubuntu-latest',
-    steps: [
+    'steps': [
       {
         name: 'checkout',
         uses: 'actions/checkout@v2',
@@ -68,18 +68,18 @@ deployWorkflow.addJobs({
       {
         name: 'install',
         run:
-          'sudo npm i -g aws-cdk@' + project.cdkVersion + '\n' + 'npm i' + '\n',
+          'sudo npm i -g aws-cdk@' + project.cdkVersion + '\n' + 'yarn' + '\n',
       },
       {
         name: 'build',
-        run: 'npm run build',
+        run: 'yarn build',
       },
       {
         name: 'deploy',
         run: 'cdk deploy --require-approval never',
       },
     ],
-    env: {
+    'env': {
       AWS_DEFAULT_REGION: 'ap-northeast-1',
       CDK_DEFAULT_REGION: 'ap-northeast-1',
       AWS_ACCESS_KEY_ID: '${{ secrets.AWS_ACCESS_KEY_ID }}',
