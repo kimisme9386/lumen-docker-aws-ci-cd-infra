@@ -57,7 +57,7 @@
     "@aws-cdk/aws-secretsmanager": "1.101.0",
     "@aws-cdk/aws-ssm": "1.101.0",
     "@aws-cdk/core": "1.101.0",
-    "cdk-pipeline-status": "0.0.5"
+    "cdk-pipeline-status": "0.0.6"
   },
   "bundledDependencies": [],
   "license": "Apache-2.0",
